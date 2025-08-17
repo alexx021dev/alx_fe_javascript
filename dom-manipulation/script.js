@@ -14,6 +14,15 @@ function loadQuotes() {
   if (storedQuotes) quotes = JSON.parse(storedQuotes);
 }
 
+// ---------- Display Quote ----------
+function displayQuote(quote) {
+  document.getElementById("quoteDisplay").innerHTML =
+    `<p>${quote.text}</p><p><em>${quote.category}</em></p>`;
+
+  // Save last viewed quote to sessionStorage
+  sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote));
+}
+
 // ---------- Populate Categories ----------
 function populateCategories() {
   let menu = document.querySelector('#categoryFilter');
@@ -31,7 +40,6 @@ function populateCategories() {
   const lastFilter = localStorage.getItem("selectedCategory");
   if (lastFilter) {
     menu.value = lastFilter;
-    filterQuotes();
   }
 }
 
@@ -49,8 +57,7 @@ function filterQuotes() {
   } else {
     const randomIndex = Math.floor(Math.random() * filtered.length);
     let random = filtered[randomIndex];
-    document.getElementById("quoteDisplay").innerHTML =
-      `<p>${random.text}</p><p><em>${random.category}</em></p>`;
+    displayQuote(random); // display & save to sessionStorage
   }
 }
 
@@ -133,47 +140,12 @@ function syncWithServer() {
 // ---------- Init ----------
 loadQuotes();
 populateCategories();
-filterQuotes();
 
-
-
-
-
-
-
-
-
-
-loadQuotes();
-
-// show random quote
-function showRandomQuote() {
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  let random = quotes[randomIndex];
-  document.getElementById("quoteDisplay").innerHTML =
-    `<p>${random.text}</p><p><em>${random.category}</em></p>`;
+// Restore last viewed quote from sessionStorage
+const lastViewed = sessionStorage.getItem("lastViewedQuote");
+if (lastViewed) {
+  displayQuote(JSON.parse(lastViewed));
+} else {
+  filterQuotes(); // fallback if none stored
 }
-
-// add new quote
-function createAddQuoteForm() {
-  let newText = document.getElementById('newQuoteText').value;
-  let newCategory = document.getElementById('newQuoteCategory').value;
-
-  if (!newText || !newCategory) {
-    alert("Please fill in both fields.");
-    return;
-  }
-
-  quotes.push({ text: newText, category: newCategory });
-
-  saveQuotes();
-
-  // clear inputs
-  document.getElementById('newQuoteText').value = '';
-  document.getElementById('newQuoteCategory').value = '';
-
-  alert("✅ New quote added!");
-}
-
-
 
