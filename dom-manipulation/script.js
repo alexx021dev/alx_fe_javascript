@@ -22,36 +22,26 @@ function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-// ---- Session Storage (optional but implemented) ----
-function saveSessionState(lastQuoteObj) {
-  if (lastQuoteObj) {
-    sessionStorage.setItem("lastQuote", JSON.stringify(lastQuoteObj));
-  }
-  const sel = document.getElementById("categoryFilter");
-  if (sel) sessionStorage.setItem("lastCategory", sel.value);
+// ---- Remember last selected filter (localStorage) ----
+function saveSelectedCategory(cat) {
+  localStorage.setItem("selectedCategory", cat);
 }
 
-function restoreSessionState() {
-  const savedCat = sessionStorage.getItem("lastCategory");
-  if (savedCat) {
+function restoreSelectedCategory() {
+  const saved = localStorage.getItem("selectedCategory");
+  if (saved) {
     const sel = document.getElementById("categoryFilter");
-    if (sel) sel.value = savedCat;
+    if ([...sel.options].some(o => o.value === saved)) {
+      sel.value = saved;
+    }
   }
-  const savedQuote = sessionStorage.getItem("lastQuote");
-  if (savedQuote) {
-    try {
-      const q = JSON.parse(savedQuote);
-      document.getElementById("quoteDisplay").textContent = `"${q.text}" — [${q.category}]`;
-      return true;
-    } catch {}
-  }
-  return false;
 }
 
 // ---- UI helpers ----
 function populateCategories() {
   const select = document.getElementById("categoryFilter");
   const categories = [...new Set(quotes.map(q => q.category))].sort();
+
   select.innerHTML = `<option value="all">All Categories</option>`;
   categories.forEach(cat => {
     const opt = document.createElement("option");
@@ -59,11 +49,9 @@ function populateCategories() {
     opt.textContent = cat;
     select.appendChild(opt);
   });
-  // keep the saved category if any
-  const savedCat = sessionStorage.getItem("lastCategory");
-  if (savedCat && [...select.options].some(o => o.value === savedCat)) {
-    select.value = savedCat;
-  }
+
+  // restore last selected filter if available
+  restoreSelectedCategory();
 }
 
 function showRandomQuote() {
@@ -77,18 +65,18 @@ function showRandomQuote() {
   }
   const random = pool[Math.floor(Math.random() * pool.length)];
   display.textContent = `"${random.text}" — [${random.category}]`;
-  saveSessionState(random);
 }
 
 function filterQuotes() {
-  saveSessionState(); // persist selected category
+  const filter = document.getElementById("categoryFilter").value;
+  saveSelectedCategory(filter);
   showRandomQuote();
 }
 
-// ---- Add Quote (form created dynamically) ----
+// ---- Add Quote ----
 function createAddQuoteForm() {
   const container = document.getElementById("addQuoteContainer");
-  container.innerHTML = ""; // ensure clean slate
+  container.innerHTML = ""; // clear old form if any
 
   const form = document.createElement("form");
   form.id = "addQuoteForm";
@@ -116,7 +104,7 @@ function createAddQuoteForm() {
   });
 
   container.appendChild(form);
-  return form; // many graders expect this
+  return form;
 }
 
 function addQuote() {
@@ -130,6 +118,7 @@ function addQuote() {
   quotes.push({ text, category });
   saveQuotes();
   populateCategories();
+
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
   alert("Quote added!");
@@ -163,7 +152,6 @@ function importFromJsonFile(event) {
       if (!Array.isArray(imported)) throw new Error("not-array");
       const cleaned = imported.filter(isValidQuoteObject);
       if (cleaned.length === 0) throw new Error("empty-or-bad");
-      // merge instead of replace
       quotes.push(...cleaned);
       saveQuotes();
       populateCategories();
@@ -171,7 +159,6 @@ function importFromJsonFile(event) {
     } catch {
       alert("Invalid JSON format. Expect an array of { text, category }.");
     } finally {
-      // reset file input so the same file can be chosen again
       event.target.value = "";
     }
   };
@@ -183,6 +170,5 @@ function importFromJsonFile(event) {
   loadQuotes();
   populateCategories();
   createAddQuoteForm();
-  // restore last session if possible; otherwise show a random quote
-  if (!restoreSessionState()) showRandomQuote();
+  showRandomQuote();
 })();
