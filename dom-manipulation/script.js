@@ -157,6 +157,11 @@ function syncWithServer() {
   }, 1000);
 }
 
+// Conflict resolution placeholder
+function resolveConflicts() {
+  document.getElementById("notification").textContent = "Conflict resolution logic not implemented yet.";
+}
+
 // Periodic auto-sync every 30s
 setInterval(syncWithServer, 30000);
 
